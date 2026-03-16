@@ -23,15 +23,21 @@ head.penup()
 head.goto(0, 0)
 head.direction = "stop"
 
-# ---------- Food ----------
-food = turtle.RawTurtle(screen)
-food.speed(0)
-food.shape("circle")
-food.color("red")
-food.penup()
-food.goto(0, 100)
-
 segments = []
+
+# ---------- Multiple Food ----------
+num_food = 5  # number of food items at a time
+food_list = []
+for _ in range(num_food):
+    f = turtle.RawTurtle(screen)
+    f.speed(0)
+    f.shape("circle")
+    f.color("red")
+    f.penup()
+    x = random.randrange(-280, 280, 20)
+    y = random.randrange(-280, 280, 20)
+    f.goto(x, y)
+    food_list.append(f)
 
 # ---------- Score ----------
 score = 0
@@ -97,32 +103,34 @@ def game_loop():
     if segments:
         segments[0].goto(head.xcor(), head.ycor())
 
-    # Food collision
-    if head.distance(food) < 20:
-        x = random.randrange(-280, 280, 20)
-        y = random.randrange(-280, 280, 20)
-        food.goto(x, y)
+    # Check collision with any food
+    for f in food_list:
+        if head.distance(f) < 20:
+            # Move eaten food to new random location
+            x = random.randrange(-280, 280, 20)
+            y = random.randrange(-280, 280, 20)
+            f.goto(x, y)
 
-        # Add new segment at last segment or behind head
-        segment = turtle.RawTurtle(screen)
-        segment.speed(0)
-        segment.shape("square")
-        segment.color("lime")
-        segment.penup()
-        if segments:
-            last = segments[-1]
-            segment.goto(last.xcor(), last.ycor())
-        else:
-            # first segment behind head
-            segment.goto(head.xcor(), head.ycor())
-        segments.append(segment)
+            # Add new segment
+            segment = turtle.RawTurtle(screen)
+            segment.speed(0)
+            segment.shape("square")
+            segment.color("lime")
+            segment.penup()
+            if segments:
+                last = segments[-1]
+                segment.goto(last.xcor(), last.ycor())
+            else:
+                segment.goto(head.xcor(), head.ycor())
+            segments.append(segment)
 
-        score += 1
-        if score > high_score: high_score = score
-        pen.clear()
-        pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
+            score += 1
+            if score > high_score: high_score = score
+            pen.clear()
+            pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
+            break  # Only eat one food per frame
 
-    # Self-collision: only check if more than 4 segments to prevent false positives
+    # Self-collision: only check if more than 4 segments
     if len(segments) > 4:
         for seg in segments[1:]:
             if head.distance(seg) < 20:
