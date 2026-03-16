@@ -36,13 +36,14 @@ segments = []
 
 # ---------- Score ----------
 score = 0
+high_score = 0
 pen = turtle.RawTurtle(screen)
 pen.speed(0)
 pen.hideturtle()
 pen.penup()
 pen.color("white")
 pen.goto(0, 260)
-pen.write("Score: 0", align="center", font=("Arial", 24, "bold"))
+pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
 
 # ---------- Controls ----------
 def go_up():
@@ -88,7 +89,7 @@ def restart_game():
     segments.clear()
     score = 0
     pen.clear()
-    pen.write(f"Score: {score}", align="center", font=("Arial", 24, "bold"))
+    pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
 
 # ---------- Start Button ----------
 start_button = tk.Button(root, text="Restart / Start Game", command=restart_game)
@@ -96,7 +97,7 @@ start_button.pack()
 
 # ---------- Main Game Loop ----------
 def game_loop():
-    global score
+    global score, high_score
 
     move()
 
@@ -124,14 +125,21 @@ def game_loop():
         segments.append(segment)
 
         score += 1
+        if score > high_score:
+            high_score = score
         pen.clear()
-        pen.write(f"Score: {score}", align="center", font=("Arial", 24, "bold"))
+        pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
 
     # Move body segments
     for i in range(len(segments)-1, 0, -1):
         segments[i].goto(segments[i-1].xcor(), segments[i-1].ycor())
     if len(segments) > 0:
         segments[0].goto(head.xcor(), head.ycor())
+
+    # Self-collision check
+    for segment in segments:
+        if segment.distance(head) < 20:
+            restart_game()
 
     screen.update()
     screen.ontimer(game_loop, 100)  # call again after 100ms
