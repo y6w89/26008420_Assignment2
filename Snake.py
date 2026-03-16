@@ -10,7 +10,6 @@ root.resizable(False, False)
 canvas = tk.Canvas(root, width=600, height=600)
 canvas.pack()
 
-# Integrate turtle with Tkinter
 screen = turtle.TurtleScreen(canvas)
 screen.bgcolor("black")
 screen.tracer(0)
@@ -46,21 +45,10 @@ pen.goto(0, 260)
 pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
 
 # ---------- Controls ----------
-def go_up():
-    if head.direction != "down":
-        head.direction = "up"
-
-def go_down():
-    if head.direction != "up":
-        head.direction = "down"
-
-def go_left():
-    if head.direction != "right":
-        head.direction = "left"
-
-def go_right():
-    if head.direction != "left":
-        head.direction = "right"
+def go_up():    global head; head.direction = "up" if head.direction != "down" else head.direction
+def go_down():  global head; head.direction = "down" if head.direction != "up" else head.direction
+def go_left():  global head; head.direction = "left" if head.direction != "right" else head.direction
+def go_right(): global head; head.direction = "right" if head.direction != "left" else head.direction
 
 screen.listen()
 screen.onkeypress(go_up, "Up")
@@ -70,28 +58,29 @@ screen.onkeypress(go_right, "Right")
 
 # ---------- Move Function ----------
 def move():
-    if head.direction == "up":
-        head.sety(head.ycor() + 20)
-    elif head.direction == "down":
-        head.sety(head.ycor() - 20)
-    elif head.direction == "left":
-        head.setx(head.xcor() - 20)
-    elif head.direction == "right":
-        head.setx(head.xcor() + 20)
+    if head.direction == "up": head.sety(head.ycor() + 20)
+    elif head.direction == "down": head.sety(head.ycor() - 20)
+    elif head.direction == "left": head.setx(head.xcor() - 20)
+    elif head.direction == "right": head.setx(head.xcor() + 20)
 
-# ---------- Restart Function ----------
+# ---------- Screen Wrap ----------
+def wrap_turtle(t):
+    if t.xcor() > 290: t.setx(-290)
+    elif t.xcor() < -290: t.setx(290)
+    if t.ycor() > 290: t.sety(-290)
+    elif t.ycor() < -290: t.sety(290)
+
+# ---------- Restart ----------
 def restart_game():
     global segments, score
     head.goto(0, 0)
     head.direction = "stop"
-    for seg in segments:
-        seg.hideturtle()
+    for seg in segments: seg.hideturtle()
     segments.clear()
     score = 0
     pen.clear()
     pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
 
-# ---------- Start Button ----------
 start_button = tk.Button(root, text="Restart / Start Game", command=restart_game)
 start_button.pack()
 
@@ -100,16 +89,13 @@ def game_loop():
     global score, high_score
 
     move()
+    wrap_turtle(head)
 
-    # Screen wrap
-    if head.xcor() > 290:
-        head.setx(-290)
-    if head.xcor() < -290:
-        head.setx(290)
-    if head.ycor() > 290:
-        head.sety(-290)
-    if head.ycor() < -290:
-        head.sety(290)
+    # Move segments from tail to head
+    for i in range(len(segments)-1, 0, -1):
+        segments[i].goto(segments[i-1].xcor(), segments[i-1].ycor())
+    if segments:
+        segments[0].goto(head.xcor(), head.ycor())
 
     # Food collision
     if head.distance(food) < 20:
@@ -117,35 +103,34 @@ def game_loop():
         y = random.randrange(-280, 280, 20)
         food.goto(x, y)
 
+        # Add new segment at last segment or behind head
         segment = turtle.RawTurtle(screen)
         segment.speed(0)
         segment.shape("square")
         segment.color("lime")
         segment.penup()
+        if segments:
+            last = segments[-1]
+            segment.goto(last.xcor(), last.ycor())
+        else:
+            # first segment behind head
+            segment.goto(head.xcor(), head.ycor())
         segments.append(segment)
 
         score += 1
-        if score > high_score:
-            high_score = score
+        if score > high_score: high_score = score
         pen.clear()
         pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
 
-    # Move body segments
-    for i in range(len(segments)-1, 0, -1):
-        segments[i].goto(segments[i-1].xcor(), segments[i-1].ycor())
-    if len(segments) > 0:
-        segments[0].goto(head.xcor(), head.ycor())
-
-    # Self-collision check
-    for segment in segments:
-        if segment.distance(head) < 20:
-            restart_game()
+    # Self-collision: only check if more than 4 segments to prevent false positives
+    if len(segments) > 4:
+        for seg in segments[1:]:
+            if head.distance(seg) < 20:
+                restart_game()
+                break
 
     screen.update()
-    screen.ontimer(game_loop, 100)  # call again after 100ms
+    screen.ontimer(game_loop, 100)
 
-# Start the game loop
 game_loop()
-
-# Run Tkinter
 root.mainloop()
