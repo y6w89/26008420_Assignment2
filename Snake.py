@@ -1,21 +1,15 @@
 import turtle
 import random
-import tkinter as tk
 
-# ---------- GUI Window ----------
-root = tk.Tk()
-root.title("Snake Game GUI")
-root.resizable(False, False)
-
-canvas = tk.Canvas(root, width=600, height=600)
-canvas.pack()
-
-screen = turtle.TurtleScreen(canvas)
+# ---------- Screen Setup ----------
+screen = turtle.Screen()
+screen.title("Snake Game")
 screen.bgcolor("black")
-screen.tracer(0)
+screen.setup(width=600, height=600)
+screen.tracer(0)  # turn off auto updates
 
 # ---------- Snake Head ----------
-head = turtle.RawTurtle(screen)
+head = turtle.Turtle()
 head.speed(0)
 head.shape("square")
 head.color("lime")
@@ -26,10 +20,10 @@ head.direction = "stop"
 segments = []
 
 # ---------- Multiple Food ----------
-num_food = 5  # number of food items at a time
+num_food = 5
 food_list = []
 for _ in range(num_food):
-    f = turtle.RawTurtle(screen)
+    f = turtle.Turtle()
     f.speed(0)
     f.shape("circle")
     f.color("red")
@@ -42,7 +36,7 @@ for _ in range(num_food):
 # ---------- Score ----------
 score = 0
 high_score = 0
-pen = turtle.RawTurtle(screen)
+pen = turtle.Turtle()
 pen.speed(0)
 pen.hideturtle()
 pen.penup()
@@ -87,9 +81,6 @@ def restart_game():
     pen.clear()
     pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
 
-start_button = tk.Button(root, text="Restart / Start Game", command=restart_game)
-start_button.pack()
-
 # ---------- Main Game Loop ----------
 def game_loop():
     global score, high_score
@@ -106,13 +97,12 @@ def game_loop():
     # Check collision with any food
     for f in food_list:
         if head.distance(f) < 20:
-            # Move eaten food to new random location
             x = random.randrange(-280, 280, 20)
             y = random.randrange(-280, 280, 20)
             f.goto(x, y)
 
-            # Add new segment
-            segment = turtle.RawTurtle(screen)
+            # Add new segment at tail
+            segment = turtle.Turtle()
             segment.speed(0)
             segment.shape("square")
             segment.color("lime")
@@ -128,9 +118,9 @@ def game_loop():
             if score > high_score: high_score = score
             pen.clear()
             pen.write(f"Score: {score}  High Score: {high_score}", align="center", font=("Arial", 24, "bold"))
-            break  # Only eat one food per frame
+            break  # eat only one food per frame
 
-    # Self-collision: only check if more than 4 segments
+    # Self-collision
     if len(segments) > 4:
         for seg in segments[1:]:
             if head.distance(seg) < 20:
@@ -141,4 +131,4 @@ def game_loop():
     screen.ontimer(game_loop, 100)
 
 game_loop()
-root.mainloop()
+screen.mainloop()
